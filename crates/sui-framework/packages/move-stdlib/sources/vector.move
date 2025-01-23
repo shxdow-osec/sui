@@ -430,7 +430,10 @@ public macro fun take_mut_while<$T>($v: &mut vector<$T>, $p: |&$T| -> bool): vec
 /// Destroys the original vector after taking the elements.
 public macro fun take_while<$T: drop>($v: vector<$T>, $p: |&$T| -> bool): vector<$T> {
     let mut v = $v;
-    v.take_mut_while!($p)
+    'search: {
+        v.length().do!(|i| if (!$p(&v[i])) return 'search v.take(i));
+        v
+    }
 }
 
 /// Take all elements of the vector `v` except the first `n` elements that satisfy the predicate `p`.
