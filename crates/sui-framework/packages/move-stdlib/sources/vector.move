@@ -414,7 +414,7 @@ public macro fun find_indices<$T>($v: &vector<$T>, $p: |&$T| -> bool): vector<u6
 }
 
 /// Takes the first `n` elements of the vector `v` that satisfy the predicate `p`.
-/// Modifies the original vector.
+/// Modifies the original vector, returning the elements not taken.
 public macro fun take_mut_while<$T>($v: &mut vector<$T>, $p: |&$T| -> bool): vector<$T> {
     let v = $v;
     let len = v.length();
