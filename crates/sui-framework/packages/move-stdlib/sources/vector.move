@@ -160,8 +160,7 @@ public fun swap_remove<Element>(v: &mut vector<Element>, i: u64): Element {
     v.pop_back()
 }
 
-/// Take all elements of the vector `v` except the first `n` elements. Aborts if `n` is greater
-/// than the length of `v`. Modifies the original vector.
+/// Skips the first `n` elements of vector `v`, modifying the original vector and returning the skipped elements. Aborts if `n` is greater than the length of `v`.
 public fun skip_mut<T>(v: &mut vector<T>, n: u64): vector<T> {
     assert!(n < v.length()); // Q: should this be `<=`?
     let mut r = vector[];
@@ -171,14 +170,13 @@ public fun skip_mut<T>(v: &mut vector<T>, n: u64): vector<T> {
     r
 }
 
-/// Return a new vector containing the elements of `v` in the range `[start, end)`.
-/// Take all elements of the vector `v` except the first `n` elements and drop the vector.
+/// Drops the first `n` elements of the vector `v`. The resulting vector contains the elements of `v` in the range `[start, end)`.
 public fun skip<T: drop>(mut v: vector<T>, n: u64): vector<T> {
     v.skip_mut(n)
 }
 
 /// Take the first `n` elements of the vector `v`. Aborts if `n` is greater than the length of `v`.
-/// Modifies the original vector.
+/// Modifies the original vector, returning the elements not taken. 
 public fun take_mut<T>(v: &mut vector<T>, n: u64): vector<T> {
     assert!(n <= v.length());
     v.reverse();
@@ -189,7 +187,7 @@ public fun take_mut<T>(v: &mut vector<T>, n: u64): vector<T> {
 }
 
 /// Take the first `n` elements of the vector `v` and drop the rest. Aborts if `n` is greater
-/// than the length of `v`. Destroys the original vector after taking the elements.
+/// than the length of `v`. Dropping the elements not taken.
 public fun take<T: drop>(mut v: vector<T>, n: u64): vector<T> {
     v.take_mut(n)
 }
