@@ -44,7 +44,7 @@ const SUI_DENY_LIST_OBJECT_ID: address = @0x403;
 const SUI_BRIDGE_ID: address = @0x9;
 
 /// The hardcoded ID for the Coin Metadata Registry Object.
-const SUI_COIN_METADATA_OBJECT_ID: address = @0x10;
+const SUI_COIN_METADATA_OBJECT_ID: address = @0xc;
 
 /// Sender is not @0x0 the system address.
 const ENotSystemAddress: u64 = 0;
