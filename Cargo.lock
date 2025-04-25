@@ -13754,6 +13754,7 @@ dependencies = [
  "mysten-metrics",
  "notify",
  "object_store",
+ "once_cell",
  "prometheus",
  "rand 0.8.5",
  "serde",
