@@ -22,9 +22,14 @@ use super::checkpoint_input_objects;
 
 pub(crate) struct ObjInfo;
 
+/// Enum to encapsulate different types of updates to be written to the main `obj_info` and
+/// reference tables.
 pub(crate) enum ProcessedObjInfoUpdate {
+    /// Represents both object creation and unwrapping.
     Created(Object),
+    /// Any mutation that isn't a wrap or delete.
     Mutated(Object),
+    /// Represents object wrap or deletion.
     Delete(ObjectID),
 }
 
@@ -37,7 +42,6 @@ impl Processor for ObjInfo {
     const NAME: &'static str = "obj_info";
     type Value = ProcessedObjInfo;
 
-    // TODO: Add tests for this function and the pruner.
     fn process(&self, checkpoint: &Arc<CheckpointData>) -> Result<Vec<Self::Value>> {
         let cp_sequence_number = checkpoint.checkpoint_summary.sequence_number;
         let checkpoint_input_objects = checkpoint_input_objects(checkpoint)?;
@@ -49,9 +53,9 @@ impl Processor for ObjInfo {
         let mut values: BTreeMap<ObjectID, Self::Value> = BTreeMap::new();
         for object_id in checkpoint_input_objects.keys() {
             if !latest_live_output_objects.contains_key(object_id) {
-                // If an input object is not in the latest live output objects, it must have been deleted
-                // or wrapped in this checkpoint. We keep an entry for it in the table.
-                // This is necessary when we query objects and iterating over them, so that we don't
+                // If an input object is not in the latest live output objects, it must have been
+                // deleted or wrapped in this checkpoint. We keep an entry for it in the table. This
+                // is necessary when we query objects and iterating over them, so that we don't
                 // include the object in the result if it was deleted.
                 values.insert(
                     *object_id,
@@ -70,6 +74,7 @@ impl Processor for ObjInfo {
                 None => true,
             };
             if should_insert {
+                // We make note of whether the obj was mutated or created to help with pruning.
                 if checkpoint_input_objects.contains_key(object_id) {
                     values.insert(
                         *object_id,
@@ -118,7 +123,8 @@ impl Handler for ObjInfo {
                     });
                 }
                 // Store record of current version to delete previous version, and another to delete
-                // itself
+                // itself. When pruning, the deletion record will not be pruned in the
+                // `value.cp_sequence_number` checkpoint, but the next one.
                 ProcessedObjInfoUpdate::Delete(object_id) => {
                     references.push(StoredObjInfoDeletionReference {
                         object_id: object_id.to_vec(),
@@ -159,7 +165,6 @@ impl Handler for ObjInfo {
         Ok(obj_info_count)
     }
 
-    // TODO: Add tests for this function.
     async fn prune<'a>(
         &self,
         from: u64,
