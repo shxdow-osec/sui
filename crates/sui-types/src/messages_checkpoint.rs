@@ -10,7 +10,7 @@ use crate::crypto::{
     AuthoritySignInfoTrait, AuthorityStrongQuorumSignInfo, RandomnessRound,
 };
 use crate::digests::Digest;
-use crate::effects::{TestEffectsBuilder, TransactionEffectsAPI};
+use crate::effects::{ObjectChange, TestEffectsBuilder, TransactionEffectsAPI};
 use crate::error::SuiResult;
 use crate::gas::GasCostSummary;
 use crate::global_state_hash::GlobalStateHash;
@@ -23,6 +23,7 @@ use crate::transaction::{Transaction, TransactionData};
 use crate::{base_types::AuthorityName, committee::Committee, error::SuiError};
 use anyhow::Result;
 use fastcrypto::hash::MultisetHash;
+use fastcrypto::hash::{Blake2b256, HashFunction};
 use mysten_metrics::histogram::Histogram as MystenHistogram;
 use once_cell::sync::OnceCell;
 use prometheus::Histogram;
@@ -119,15 +120,54 @@ impl Default for ECMHLiveObjectSetDigest {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum CheckpointArtifact {
+    // Object state before and after this checkpoint for all touched objects
+    AccumulatedObjectChange(ObjectChange),
+    // Execution digests for all transactions in this checkpoint
+    ExecutionDigests(ExecutionDigests),
+    // More things? Events?
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
+pub struct CheckpointArtifactsDigest {
+    pub digest: Digest,
+}
+
+impl From<fastcrypto::hash::Digest<32>> for CheckpointArtifactsDigest {
+    fn from(digest: fastcrypto::hash::Digest<32>) -> Self {
+        Self {
+            digest: Digest::new(digest.digest),
+        }
+    }
+}
+
+impl From<Vec<CheckpointArtifact>> for CheckpointArtifactsDigest {
+    fn from(artifacts: Vec<CheckpointArtifact>) -> Self {
+        // TODO: Replace with a Merkle tree hash
+        let mut h = Blake2b256::new();
+        for artifact in artifacts.iter() {
+            h.update(bcs::to_bytes(artifact).unwrap());
+        }
+        Self::from(h.finalize())
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
 pub enum CheckpointCommitment {
     ECMHLiveObjectSetDigest(ECMHLiveObjectSetDigest),
-    // Other commitment types (e.g. merkle roots) go here.
+    CheckpointArtifactsDigest(CheckpointArtifactsDigest),
 }
 
 impl From<ECMHLiveObjectSetDigest> for CheckpointCommitment {
     fn from(d: ECMHLiveObjectSetDigest) -> Self {
         Self::ECMHLiveObjectSetDigest(d)
+    }
+}
+
+impl From<CheckpointArtifactsDigest> for CheckpointCommitment {
+    fn from(d: CheckpointArtifactsDigest) -> Self {
+        Self::CheckpointArtifactsDigest(d)
     }
 }
 
@@ -211,6 +251,7 @@ impl CheckpointSummary {
         end_of_epoch_data: Option<EndOfEpochData>,
         timestamp_ms: CheckpointTimestamp,
         randomness_rounds: Vec<RandomnessRound>,
+        checkpoint_commitments: Vec<CheckpointCommitment>,
     ) -> CheckpointSummary {
         let content_digest = *transactions.digest();
 
@@ -235,7 +276,7 @@ impl CheckpointSummary {
             end_of_epoch_data,
             timestamp_ms,
             version_specific_data,
-            checkpoint_commitments: Default::default(),
+            checkpoint_commitments,
         }
     }
 
