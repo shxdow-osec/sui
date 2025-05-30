@@ -3,6 +3,7 @@
 
 use crate::writer::StateSnapshotWriterV1;
 use anyhow::Result;
+use anyhow::anyhow;
 use bytes::Bytes;
 use object_store::DynObjectStore;
 use prometheus::{
@@ -141,10 +142,14 @@ impl StateSnapshotUploader {
                     .get_epoch_state_commitments(*epoch)
                     .expect("Expected last checkpoint of epoch to have end of epoch data")
                     .expect("Expected end of epoch data to be present");
-                let ECMHLiveObjectSetDigest(state_hash_commitment) = commitments
+                let state_hash_commitment = match commitments
                     .last()
                     .expect("Expected at least one commitment")
-                    .clone();
+                    .clone()
+                {
+                    ECMHLiveObjectSetDigest(digest) => digest,
+                    _ => return Err(anyhow::anyhow!("Expected ECMHLiveObjectSetDigest")),
+                };
                 state_snapshot_writer
                     .write(*epoch, db, state_hash_commitment, self.chain_identifier)
                     .await?;

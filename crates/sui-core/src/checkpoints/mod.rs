@@ -28,10 +28,12 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use sui_macros::fail_point;
 use sui_network::default_mysten_network_config;
-use sui_types::base_types::ConciseableName;
+use sui_types::base_types::{ConciseableName, ObjectID};
 use sui_types::executable_transaction::VerifiedExecutableTransaction;
 use sui_types::execution::ExecutionTimeObservationKey;
-use sui_types::messages_checkpoint::CheckpointCommitment;
+use sui_types::messages_checkpoint::{
+    CheckpointArtifact, CheckpointArtifactsDigest, CheckpointCommitment,
+};
 use sui_types::sui_system_state::epoch_start_sui_system_state::EpochStartSystemStateTrait;
 use tokio::sync::{mpsc, watch};
 use typed_store::rocks::{default_db_options, DBOptions, ReadWriteOptions};
@@ -51,7 +53,7 @@ use sui_types::base_types::{AuthorityName, EpochId, TransactionDigest};
 use sui_types::committee::StakeUnit;
 use sui_types::crypto::AuthorityStrongQuorumSignInfo;
 use sui_types::digests::{CheckpointContentsDigest, CheckpointDigest};
-use sui_types::effects::{TransactionEffects, TransactionEffectsAPI};
+use sui_types::effects::{ObjectChange, TransactionEffects, TransactionEffectsAPI};
 use sui_types::error::{SuiError, SuiResult};
 use sui_types::gas::GasCostSummary;
 use sui_types::message_envelope::Message;
@@ -1803,6 +1805,48 @@ impl CheckpointBuilder {
                 .copied()
                 .collect();
 
+            let all_object_changes = effects
+                .iter()
+                .map(|e| e.object_changes())
+                .collect::<Vec<_>>();
+
+            let mut net_object_changes: BTreeMap<ObjectID, ObjectChange> = BTreeMap::new();
+            for object_changes in all_object_changes {
+                for object_change in object_changes {
+                    if let Some(existing_object_change) = net_object_changes.get(&object_change.id) {
+                        net_object_changes.insert(
+                            object_change.id,
+                            ObjectChange {
+                                id: object_change.id,
+                                input_version: existing_object_change.input_version,
+                                input_digest: existing_object_change.input_digest,
+                                output_version: object_change.output_version,
+                                output_digest: object_change.output_digest,
+                                id_operation: object_change.id_operation,
+                            }
+                        );
+                    } else {
+                        net_object_changes.insert(
+                            object_change.id,
+                            object_change
+                        );
+                    }
+                }
+            }
+
+            let object_artifacts = net_object_changes
+                .into_values()
+                .map(|object_change| CheckpointArtifact::AccumulatedObjectChange(object_change))
+                .collect::<Vec<_>>();
+            let execution_digest_artifacts = effects
+                .iter()
+                .map(|e| CheckpointArtifact::ExecutionDigests(e.execution_digests()))
+                .collect::<Vec<_>>();
+            let artifacts = [object_artifacts, execution_digest_artifacts].concat();
+            let artifacts_digest =
+                CheckpointCommitment::from(CheckpointArtifactsDigest::from(artifacts));
+            info!("Artifacts digest: {:?}", artifacts_digest);
+
             let summary = CheckpointSummary::new(
                 self.epoch_store.protocol_config(),
                 epoch,
@@ -1814,6 +1858,7 @@ impl CheckpointBuilder {
                 end_of_epoch_data,
                 timestamp_ms,
                 matching_randomness_rounds,
+                vec![artifacts_digest],
             );
             summary.report_checkpoint_age(
                 &self.metrics.last_created_checkpoint_age,
