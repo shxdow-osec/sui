@@ -13,8 +13,6 @@ pub fn load_checkpoint(file_path: &str) -> CheckpointData {
 
 pub async fn download_and_save_checkpoint(checkpoint_number: u64, file_path: &str) -> Result<()> {
     let sui_client = RpcClient::new("http://localhost:9000").unwrap();
-    let summary = sui_client.get_checkpoint_summary(checkpoint_number).await?;
-    println!("Summary: {:?}", summary);
     let full_checkpoint = sui_client.get_full_checkpoint(checkpoint_number).await?;
     let mut file = File::create(file_path).unwrap();
     let bytes = bcs::to_bytes(&full_checkpoint).unwrap();
@@ -24,17 +22,22 @@ pub async fn download_and_save_checkpoint(checkpoint_number: u64, file_path: &st
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let test_file = "checkpoint.chk";
+    let checkpoint_number = 261;
+    let test_file = format!("test_files/checkpoint-{}.chk", checkpoint_number);
 
-    if !std::path::Path::new(test_file).exists() {
-        println!("Checkpoint not found, fetching from local network");
-        download_and_save_checkpoint(2, test_file).await?;
+    if !std::path::Path::new(&test_file).exists() {
+        println!(
+            "Checkpoint {} not found, fetching from local network",
+            checkpoint_number
+        );
+        download_and_save_checkpoint(checkpoint_number, &test_file).await?;
     }
 
-    println!("Loading checkpoint from file");
-    let full_checkpoint = load_checkpoint(test_file);
+    println!("Loading checkpoint from file {}", test_file);
+    let full_checkpoint = load_checkpoint(&test_file);
+    let summary = full_checkpoint.checkpoint_summary.data();
+    println!("Summary: {:?}", summary);
 
-    println!("Full checkpoint: {:?}", full_checkpoint);
     let commitments = &full_checkpoint
         .checkpoint_summary
         .data()

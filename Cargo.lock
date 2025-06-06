@@ -5598,20 +5598,13 @@ dependencies = [
 
 [[package]]
 name = "grpc-reader"
-version = "1.49.0"
+version = "1.50.0"
 dependencies = [
  "anyhow",
  "bcs",
- "fastcrypto",
  "hex",
- "move-core-types",
  "rand 0.8.5",
- "reqwest 0.12.9",
- "serde",
- "sui-json-rpc-types",
- "sui-light-client",
  "sui-rpc-api",
- "sui-sdk",
  "sui-types",
  "tokio",
 ]
