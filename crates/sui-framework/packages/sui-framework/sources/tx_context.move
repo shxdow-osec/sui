@@ -77,6 +77,10 @@ native fun native_ids_created(): u64;
 
 #[allow(unused_function)]
 // native function to retrieve gas price, currently not exposed
+native fun native_rgp(): u64;
+
+#[allow(unused_function)]
+// native function to retrieve gas price, currently not exposed
 native fun native_gas_price(): u64;
 
 #[allow(unused_function)]
@@ -95,12 +99,13 @@ public fun new(
     ids_created: u64,
 ): TxContext {
     assert!(tx_hash.length() == TX_HASH_LENGTH, EBadTxHashLength);
-    replace(
+    replace_with_rgp(
         sender,
         tx_hash,
         epoch,
         epoch_timestamp_ms,
         ids_created,
+        native_rgp(),
         native_gas_price(),
         native_gas_budget(),
         native_sponsor(),
@@ -159,12 +164,13 @@ native fun last_created_id(): address;
 #[test_only]
 public fun increment_epoch_number(self: &mut TxContext) {
     let epoch = self.epoch() + 1;
-    replace(
+    replace_with_rgp(
         native_sender(),
         self.tx_hash,
         epoch,
         native_epoch_timestamp_ms(),
         native_ids_created(),
+        native_rgp(),
         native_gas_price(),
         native_gas_budget(),
         native_sponsor(),
@@ -174,12 +180,13 @@ public fun increment_epoch_number(self: &mut TxContext) {
 #[test_only]
 public fun increment_epoch_timestamp(self: &mut TxContext, delta_ms: u64) {
     let epoch_timestamp_ms = self.epoch_timestamp_ms() + delta_ms;
-    replace(
+    replace_with_rgp(
         native_sender(),
         self.tx_hash,
         native_epoch(),
         epoch_timestamp_ms,
         native_ids_created(),
+        native_rgp(),
         native_gas_price(),
         native_gas_budget(),
         native_sponsor(),
@@ -192,6 +199,7 @@ fun option_sponsor(): Option<address> {
 }
 native fun native_sponsor(): vector<address>;
 
+#[allow(unused_function)]
 #[test_only]
 native fun replace(
     sender: address,
@@ -199,6 +207,19 @@ native fun replace(
     epoch: u64,
     epoch_timestamp_ms: u64,
     ids_created: u64,
+    gas_price: u64,
+    gas_budget: u64,
+    sponsor: vector<address>,
+);
+
+#[test_only]
+native fun replace_with_rgp(
+    sender: address,
+    tx_hash: vector<u8>,
+    epoch: u64,
+    epoch_timestamp_ms: u64,
+    ids_created: u64,
+    rgp: u64,
     gas_price: u64,
     gas_budget: u64,
     sponsor: vector<address>,
