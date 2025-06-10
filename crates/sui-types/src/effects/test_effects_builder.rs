@@ -10,7 +10,7 @@ use crate::gas::GasCostSummary;
 use crate::message_envelope::Message;
 use crate::object::Owner;
 use crate::transaction::{InputObjectKind, SenderSignedData, TransactionDataAPI};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 pub struct TestEffectsBuilder {
     transaction: SenderSignedData,
