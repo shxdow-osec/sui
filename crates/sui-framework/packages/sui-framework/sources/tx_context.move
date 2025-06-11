@@ -99,7 +99,7 @@ public fun new(
     ids_created: u64,
 ): TxContext {
     assert!(tx_hash.length() == TX_HASH_LENGTH, EBadTxHashLength);
-    replace_with_rgp(
+    replace(
         sender,
         tx_hash,
         epoch,
@@ -164,7 +164,7 @@ native fun last_created_id(): address;
 #[test_only]
 public fun increment_epoch_number(self: &mut TxContext) {
     let epoch = self.epoch() + 1;
-    replace_with_rgp(
+    replace(
         native_sender(),
         self.tx_hash,
         epoch,
@@ -180,7 +180,7 @@ public fun increment_epoch_number(self: &mut TxContext) {
 #[test_only]
 public fun increment_epoch_timestamp(self: &mut TxContext, delta_ms: u64) {
     let epoch_timestamp_ms = self.epoch_timestamp_ms() + delta_ms;
-    replace_with_rgp(
+    replace(
         native_sender(),
         self.tx_hash,
         native_epoch(),
@@ -199,21 +199,8 @@ fun option_sponsor(): Option<address> {
 }
 native fun native_sponsor(): vector<address>;
 
-#[allow(unused_function)]
 #[test_only]
 native fun replace(
-    sender: address,
-    tx_hash: vector<u8>,
-    epoch: u64,
-    epoch_timestamp_ms: u64,
-    ids_created: u64,
-    gas_price: u64,
-    gas_budget: u64,
-    sponsor: vector<address>,
-);
-
-#[test_only]
-native fun replace_with_rgp(
     sender: address,
     tx_hash: vector<u8>,
     epoch: u64,

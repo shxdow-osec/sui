@@ -386,67 +386,6 @@ pub struct TxContextReplaceCostParams {
  *     epoch: u64,
  *     epoch_timestamp_ms: u64,
  *     ids_created: u64,
- *     gas_price: u64,
- *     gas_budget: u64,
- *     sponsor: vector<address>,
- * )
- * ```
- * Used by all testing functions that have to change a value in the `TransactionContext`.
- **************************************************************************************************/
-pub fn replace(
-    context: &mut NativeContext,
-    ty_args: Vec<Type>,
-    mut args: VecDeque<Value>,
-) -> PartialVMResult<NativeResult> {
-    debug_assert!(ty_args.is_empty());
-    debug_assert!(args.len() == 8);
-
-    let tx_context_replace_cost_params = context
-        .extensions_mut()
-        .get::<NativesCostTable>()?
-        .tx_context_replace_cost_params
-        .clone();
-    native_charge_gas_early_exit!(
-        context,
-        tx_context_replace_cost_params.tx_context_replace_cost_base
-    );
-
-    let mut sponsor: Vec<AccountAddress> = pop_arg!(args, Vec<AccountAddress>);
-    let gas_budget: u64 = pop_arg!(args, u64);
-    let gas_price: u64 = pop_arg!(args, u64);
-    let ids_created: u64 = pop_arg!(args, u64);
-    let epoch_timestamp_ms: u64 = pop_arg!(args, u64);
-    let epoch: u64 = pop_arg!(args, u64);
-    let tx_hash: Vec<u8> = pop_arg!(args, Vec<u8>);
-    let sender: AccountAddress = pop_arg!(args, AccountAddress);
-    let transaction_context: &mut TransactionContext = context.extensions_mut().get_mut()?;
-    transaction_context.replace(
-        sender,
-        tx_hash,
-        epoch,
-        epoch_timestamp_ms,
-        ids_created,
-        // this is unused if this function is called
-        // is there a better way to do this?
-        1000,
-        gas_price,
-        gas_budget,
-        sponsor.pop(),
-    )?;
-
-    Ok(NativeResult::ok(context.gas_used(), smallvec![]))
-}
-
-/***************************************************************************************************
- * native fun replace_with_rgp
- * Implementation of the Move native function
- * ```
- * native fun replace(
- *     sender: address,
- *     tx_hash: vector<u8>,
- *     epoch: u64,
- *     epoch_timestamp_ms: u64,
- *     ids_created: u64,
  *     rgp: u64,
  *     gas_price: u64,
  *     gas_budget: u64,
@@ -455,7 +394,7 @@ pub fn replace(
  * ```
  * Used by all testing functions that have to change a value in the `TransactionContext`.
  **************************************************************************************************/
-pub fn replace_with_rgp(
+pub fn replace(
     context: &mut NativeContext,
     ty_args: Vec<Type>,
     mut args: VecDeque<Value>,

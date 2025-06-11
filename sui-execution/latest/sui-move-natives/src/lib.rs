@@ -1177,11 +1177,6 @@ pub fn all_natives(silent: bool, protocol_config: &ProtocolConfig) -> NativeFunc
         ),
         ("tx_context", "replace", make_native!(tx_context::replace)),
         (
-            "tx_context",
-            "replace_with_rgp",
-            make_native!(tx_context::replace_with_rgp),
-        ),
-        (
             "types",
             "is_one_time_witness",
             make_native!(types::is_one_time_witness),
