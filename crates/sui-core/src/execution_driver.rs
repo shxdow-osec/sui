@@ -39,6 +39,7 @@ pub async fn execution_process(
         let certificate;
         let expected_effects_digest;
         let txn_ready_time;
+        let assigned_versions;
         let scheduling_source;
         let _executing_guard;
         tokio::select! {
@@ -48,6 +49,7 @@ pub async fn execution_process(
                     expected_effects_digest = pending_cert.expected_effects_digest;
                     txn_ready_time = pending_cert.stats.ready_time.unwrap();
                     _executing_guard = pending_cert.executing_guard;
+                    assigned_versions = pending_cert.assigned_versions;
                     scheduling_source = pending_cert.scheduling_source;
                 } else {
                     // Should only happen after the AuthorityState has shut down and tx_ready_certificate
@@ -122,6 +124,7 @@ pub async fn execution_process(
             match authority.try_execute_immediately(
                 &certificate,
                 expected_effects_digest,
+                assigned_versions,
                 &epoch_store_clone,
                 scheduling_source,
             ).await {

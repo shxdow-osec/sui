@@ -757,6 +757,7 @@ impl SuiNode {
                 .try_execute_immediately(
                     &transaction,
                     None,
+                    None,
                     &epoch_store,
                     SchedulingSource::NonFastPath,
                 )

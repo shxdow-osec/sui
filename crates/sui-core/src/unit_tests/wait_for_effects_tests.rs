@@ -122,6 +122,7 @@ async fn test_wait_for_effects_position_mismatch() {
             .try_execute_immediately(
                 &transaction,
                 None,
+                None,
                 &epoch_store,
                 SchedulingSource::NonFastPath,
             )
@@ -305,6 +306,7 @@ async fn test_wait_for_effects_fastpath_certified() {
             .try_execute_immediately(
                 &transaction,
                 None,
+                None,
                 &epoch_store,
                 SchedulingSource::NonFastPath,
             )
@@ -369,6 +371,7 @@ async fn test_wait_for_effects_finalized() {
             .try_execute_immediately(
                 &transaction,
                 None,
+                None,
                 &epoch_store,
                 SchedulingSource::NonFastPath,
             )
@@ -432,6 +435,7 @@ async fn test_wait_for_effects_expired() {
         state_clone
             .try_execute_immediately(
                 &transaction,
+                None,
                 None,
                 &epoch_store,
                 SchedulingSource::NonFastPath,

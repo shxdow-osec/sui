@@ -362,6 +362,7 @@ mod tests {
                         VerifiedCertificate::new_unchecked(certificate),
                     ),
                     None,
+                    None,
                     &epoch_store,
                     SchedulingSource::NonFastPath,
                 )

@@ -405,6 +405,7 @@ impl<'a> TestAuthorityBuilder<'a> {
                     genesis.checkpoint().sequence_number,
                 ),
                 None,
+                None,
                 &state.epoch_store_for_testing(),
                 SchedulingSource::NonFastPath,
             )

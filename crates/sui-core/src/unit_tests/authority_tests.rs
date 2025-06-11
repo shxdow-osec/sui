@@ -6571,6 +6571,7 @@ async fn test_consensus_handler_congestion_control_transaction_cancellation() {
                 .transaction_data()
                 .input_objects()
                 .unwrap(),
+            None,
             authority.epoch_store_for_testing().epoch(),
         )
         .unwrap();

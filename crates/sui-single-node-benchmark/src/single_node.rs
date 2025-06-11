@@ -121,6 +121,7 @@ impl SingleValidator {
             .try_execute_immediately(
                 &executable,
                 None,
+                None,
                 &self.epoch_store,
                 SchedulingSource::NonFastPath,
             )
@@ -157,6 +158,7 @@ impl SingleValidator {
                 self.get_validator()
                     .try_execute_immediately(
                         &cert,
+                        None,
                         None,
                         &self.epoch_store,
                         SchedulingSource::NonFastPath,

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    authority::authority_per_epoch_store::{AuthorityPerEpochStore, CertLockGuard},
+    authority::{
+        authority_per_epoch_store::{AuthorityPerEpochStore, CertLockGuard},
+        shared_object_version_manager::AssignedVersions,
+    },
     execution_cache::ObjectCacheRead,
 };
 use itertools::izip;
@@ -145,6 +148,7 @@ impl TransactionInputLoader {
         tx_key: &TransactionKey,
         _tx_lock: &CertLockGuard, // see below for why this is needed
         input_object_kinds: &[InputObjectKind],
+        assigned_shared_object_versions: Option<AssignedVersions>,
         epoch_id: EpochId,
     ) -> SuiResult<InputObjects> {
         let assigned_shared_versions_cell: OnceCell<Option<HashMap<_, _>>> = OnceCell::new();
@@ -177,9 +181,13 @@ impl TransactionInputLoader {
                 } => {
                     let assigned_shared_versions = assigned_shared_versions_cell
                         .get_or_init(|| {
-                            epoch_store
-                                .get_assigned_shared_object_versions(tx_key)
-                                .map(|versions| versions.into_iter().collect())
+                            if let Some(assigned_versions) = &assigned_shared_object_versions {
+                                Some(assigned_versions.iter().cloned().collect())
+                            } else {
+                                epoch_store
+                                    .get_assigned_shared_object_versions(tx_key)
+                                    .map(|versions| versions.into_iter().collect())
+                            }
                         })
                         .as_ref()
                         .unwrap_or_else(|| {

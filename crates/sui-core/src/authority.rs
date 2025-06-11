@@ -36,6 +36,7 @@ use prometheus::{
 };
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use shared_object_version_manager::AssignedVersions;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Write;
@@ -1287,6 +1288,7 @@ impl AuthorityState {
         &self,
         certificate: &VerifiedExecutableTransaction,
         mut expected_effects_digest: Option<TransactionEffectsDigest>,
+        assigned_shared_object_versions: Option<AssignedVersions>,
         epoch_store: &Arc<AuthorityPerEpochStore>,
         scheduling_source: SchedulingSource,
     ) -> SuiResult<(TransactionEffects, Option<ExecutionError>)> {
@@ -1328,8 +1330,12 @@ impl AuthorityState {
 
         let execution_start_time = Instant::now();
 
-        let input_objects =
-            self.read_objects_for_execution(tx_guard.as_lock_guard(), certificate, epoch_store)?;
+        let input_objects = self.read_objects_for_execution(
+            tx_guard.as_lock_guard(),
+            certificate,
+            assigned_shared_object_versions,
+            epoch_store,
+        )?;
 
         if expected_effects_digest.is_none() {
             // We could be re-executing a previously executed but uncommitted transaction, perhaps after
@@ -1366,6 +1372,7 @@ impl AuthorityState {
         &self,
         tx_lock: &CertLockGuard,
         certificate: &VerifiedExecutableTransaction,
+        assigned_shared_object_versions: Option<AssignedVersions>,
         epoch_store: &Arc<AuthorityPerEpochStore>,
     ) -> SuiResult<InputObjects> {
         let _scope = monitored_scope("Execution::load_input_objects");
@@ -1379,6 +1386,7 @@ impl AuthorityState {
             &certificate.key(),
             tx_lock,
             input_objects,
+            assigned_shared_object_versions,
             epoch_store.epoch(),
         )
     }
@@ -1393,6 +1401,7 @@ impl AuthorityState {
         let (effects, execution_error_opt) = self
             .try_execute_immediately(
                 &VerifiedExecutableTransaction::new_from_certificate(certificate.clone()),
+                None,
                 None,
                 &epoch_store,
                 SchedulingSource::NonFastPath,
@@ -5382,7 +5391,7 @@ impl AuthorityState {
         )?;
 
         let input_objects =
-            self.read_objects_for_execution(&tx_lock, &executable_tx, epoch_store)?;
+            self.read_objects_for_execution(&tx_lock, &executable_tx, None, epoch_store)?;
 
         let (transaction_outputs, _timings, _execution_error_opt) = self.execute_certificate(
             &execution_guard,

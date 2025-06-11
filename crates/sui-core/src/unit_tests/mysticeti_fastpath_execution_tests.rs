@@ -100,6 +100,7 @@ async fn test_fast_path_execution() {
         .try_execute_immediately(
             &cert,
             None,
+            None,
             &state.epoch_store_for_testing(),
             SchedulingSource::MysticetiFastPath,
         )
@@ -158,6 +159,7 @@ async fn test_fast_path_then_consensus_execution() {
         .try_execute_immediately(
             &cert,
             None,
+            None,
             &state.epoch_store_for_testing(),
             SchedulingSource::MysticetiFastPath,
         )
@@ -167,6 +169,7 @@ async fn test_fast_path_then_consensus_execution() {
     let (effects2, _) = state
         .try_execute_immediately(
             &cert,
+            None,
             None,
             &state.epoch_store_for_testing(),
             SchedulingSource::NonFastPath,
@@ -210,6 +213,7 @@ async fn test_consensus_then_fast_path_execution() {
         .try_execute_immediately(
             &cert,
             None,
+            None,
             &state.epoch_store_for_testing(),
             SchedulingSource::NonFastPath,
         )
@@ -219,6 +223,7 @@ async fn test_consensus_then_fast_path_execution() {
     let (effects2, _) = state
         .try_execute_immediately(
             &cert,
+            None,
             None,
             &state.epoch_store_for_testing(),
             SchedulingSource::MysticetiFastPath,
