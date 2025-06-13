@@ -110,4 +110,8 @@ mod tests {
             assert!(checkpoint.data().checkpoint_commitments.len() > 0);
         }
     }
+
+    // TODO: Add tests to check that the artifacts is being computed correctly
+    // TODO: Fetching artifact digest via Rust SDK is not working. Look into this.
 }
+
