@@ -2,10 +2,10 @@ use anyhow::Result;
 use sui_sdk::rpc_types::Checkpoint;
 // use std::fs::File;
 // use std::io::{Read, Write};
-use sui_rpc_api::Client as RpcClient;
-use sui_types::full_checkpoint_content::CheckpointData;
-use sui_sdk::SuiClientBuilder;
 use sui_json_rpc_types::CheckpointId;
+use sui_rpc_api::Client as RpcClient;
+use sui_sdk::SuiClientBuilder;
+use sui_types::full_checkpoint_content::CheckpointData;
 
 // pub fn load_checkpoint(file_path: &str) -> CheckpointData {
 //     let mut file = File::open(file_path).unwrap();
@@ -41,7 +41,7 @@ pub async fn get_checkpoint_via_sdk(checkpoint_number: u64) -> Result<Checkpoint
 #[tokio::main]
 async fn main() -> Result<()> {
     let use_sdk = false;
-    let checkpoint_number = 2;
+    let checkpoint_number = 1;
     println!("Reading checkpoint {}", checkpoint_number);
     if use_sdk {
         println!("Using SDK");
@@ -79,4 +79,35 @@ async fn main() -> Result<()> {
     // println!("Commitments: {:?}", commitments);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_checkpoint_via_grpc() {
+        let sui_client = RpcClient::new("http://localhost:9000").unwrap();
+        let latest_checkpoint = sui_client.get_latest_checkpoint().await.unwrap();
+        let latest_checkpoint_number = latest_checkpoint.data().sequence_number;
+        println!(
+            "Latest checkpoint sequence number: {:?}",
+            latest_checkpoint_number
+        );
+
+        let test_checkpoint_numbers = [1, latest_checkpoint_number / 2, latest_checkpoint_number];
+        for test_checkpoint_number in test_checkpoint_numbers {
+            assert!(test_checkpoint_number <= latest_checkpoint.data().sequence_number);
+            let checkpoint = sui_client
+                .get_checkpoint_summary(test_checkpoint_number)
+                .await
+                .unwrap();
+            println!(
+                "Checkpoint artifacts digest: {:?} (cp {})",
+                checkpoint.data().checkpoint_commitments,
+                test_checkpoint_number
+            );
+            assert!(checkpoint.data().checkpoint_commitments.len() > 0);
+        }
+    }
 }
