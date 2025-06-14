@@ -10,7 +10,7 @@ pub(crate) trait CommitteeThreshold {
     fn threshold(committee: &Committee) -> Stake;
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct QuorumThreshold;
 
 #[cfg(test)]
@@ -36,7 +36,7 @@ impl CommitteeThreshold for ValidityThreshold {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct StakeAggregator<T> {
     votes: BTreeSet<AuthorityIndex>,
     stake: Stake,

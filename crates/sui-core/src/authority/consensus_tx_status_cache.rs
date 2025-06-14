@@ -68,10 +68,6 @@ impl ConsensusTxStatusCache {
         transaction_position: ConsensusPosition,
         status: ConsensusTxStatus,
     ) {
-        debug!(
-            "Setting transaction status for {:?}: {:?}",
-            transaction_position, status
-        );
         let mut inner = self.inner.write();
         if let Some(last_committed_leader_round) = *self.last_committed_leader_round_rx.borrow() {
             if transaction_position.block.round as u64 + CONSENSUS_STATUS_RETENTION_ROUNDS
@@ -113,6 +109,12 @@ impl ConsensusTxStatusCache {
                 .or_default()
                 .insert(transaction_position);
         }
+
+        debug!(
+            "Setting transaction status for {:?}: {:?}",
+            transaction_position, status
+        );
+
         self.status_notify_read
             .notify(&transaction_position, &status);
     }

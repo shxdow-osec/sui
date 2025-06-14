@@ -724,6 +724,10 @@ impl<C: CheckpointServiceNotify + Send + Sync> ConsensusHandler<C> {
                     if parsed.rejected {
                         // TODO(fastpath): Add metrics for rejected transactions.
                         if parsed.transaction.kind.is_user_transaction() {
+                            debug!(
+                            "[handle_consensus_commit] Rejecting transaction at position {:?} with digest {:?}",
+                            position, parsed.transaction
+                        );
                             self.epoch_store
                                 .set_consensus_tx_status(position, ConsensusTxStatus::Rejected);
                         }
@@ -732,6 +736,10 @@ impl<C: CheckpointServiceNotify + Send + Sync> ConsensusHandler<C> {
                         continue;
                     }
                     if parsed.transaction.kind.is_user_transaction() {
+                        debug!(
+                            "[handle_consensus_commit] Finalizing transaction at position {:?} with digest {:?}",
+                            position, parsed.transaction
+                        );
                         self.epoch_store
                             .set_consensus_tx_status(position, ConsensusTxStatus::Finalized);
                     }
@@ -1268,18 +1276,26 @@ impl ConsensusBlockHandler {
                 let block_ref = certified_block.block.reference();
                 let transactions =
                     parse_block_transactions(&certified_block.block, &certified_block.rejected);
+                tracing::debug!(
+                    "[handle_certified_block] Parsed {} transactions from block {block_ref:?}",
+                    transactions.len()
+                );
                 (block_ref, transactions)
             })
             .collect::<Vec<_>>();
         let mut executable_transactions = vec![];
-        for (idx, (block, transactions)) in parsed_transactions.into_iter().enumerate() {
-            for parsed in transactions {
+        for (block, transactions) in parsed_transactions.into_iter() {
+            for (txn_idx, parsed) in transactions.into_iter().enumerate() {
                 let position = ConsensusPosition {
                     block,
-                    index: idx as TransactionIndex,
+                    index: txn_idx as TransactionIndex,
                 };
                 if parsed.rejected {
                     // TODO(fastpath): avoid parsing blocks twice between handling commit and fastpath transactions?
+                    debug!(
+                        "[handle_certified_commit] Rejecting transaction at position {:?} with digest {:?}",
+                        position, parsed.transaction
+                    );
                     self.epoch_store
                         .set_consensus_tx_status(position, ConsensusTxStatus::Rejected);
                     self.metrics
@@ -1288,6 +1304,10 @@ impl ConsensusBlockHandler {
                         .inc();
                     continue;
                 }
+                debug!(
+                    "[handle_consensus_commit] FP Certified transaction at position {:?} with digest {:?}",
+                    position, parsed.transaction
+                );
                 self.epoch_store
                     .set_consensus_tx_status(position, ConsensusTxStatus::FastpathCertified);
 

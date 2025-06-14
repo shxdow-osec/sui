@@ -474,6 +474,12 @@ impl VoteInfo {
         for (idx, reject_txn_votes) in &self.reject_txn_votes {
             // The transaction is voted to be rejected.
             if reject_txn_votes.reached_threshold(committee) {
+                tracing::debug!(
+                    "Transaction {} in block {} is rejected by a quorum of authorities with votes : {:?}",
+                    idx,
+                    block.reference(),
+                    self.reject_txn_votes.get(idx).unwrap()
+                );
                 rejected.push(*idx);
                 continue;
             }
@@ -501,6 +507,12 @@ impl VoteInfo {
             }
         }
         // The block is certified.
+        tracing::debug!(
+            "Block {} is certified with accept votes: {:?} and reject votes: {:?}",
+            block.reference(),
+            self.accept_block_votes,
+            self.reject_txn_votes
+        );
         self.is_certified = true;
         Some(CertifiedBlock {
             block: block.clone(),
