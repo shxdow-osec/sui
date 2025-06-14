@@ -15,7 +15,6 @@ pub(crate) mod scheduler;
 mod tests;
 
 /// The result of scheduling the withdraw reservations for a transaction.
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) enum ScheduleResult {
     /// We know for sure that the withdraw reservations in this transactions all have enough balance.
@@ -43,7 +42,6 @@ pub(crate) struct BalanceSettlement {
 }
 
 /// Details regarding all balance withdraw reservations in a transaction.
-#[allow(dead_code)]
 #[derive(Clone)]
 pub(crate) struct TxBalanceWithdraw {
     pub tx_digest: TransactionDigest,
