@@ -206,8 +206,9 @@ impl MoveTestAdapter<'_> for SimpleVMTestAdapter {
                         .map(|tag| session.load_type(&tag))
                         .collect::<VMResult<_>>()?;
 
+                    let mut cov = Vec::new();
                     session.execute_function_bypass_visibility(
-                        module, function, type_args, args, gas_status, None,
+                        module, function, type_args, args, gas_status, None, &mut cov
                     )
                 },
                 test_vm_config(),

@@ -603,6 +603,7 @@ impl<'env, 'pc, 'vm, 'state, 'linkage, 'gas> Context<'env, 'pc, 'vm, 'state, 'li
         linkage: &RootedLinkage,
         tracer: Option<&mut MoveTraceBuilder>,
     ) -> VMResult<Vec<CtxValue>> {
+        let mut coverage = Vec::new();
         let ty_args = {
             // load type arguments for VM
             let _ = ty_args;
@@ -623,6 +624,7 @@ impl<'env, 'pc, 'vm, 'state, 'linkage, 'gas> Context<'env, 'pc, 'vm, 'state, 'li
                 &mut SuiGasMeter(gas_status),
                 &mut self.native_extensions,
                 tracer,
+                &mut coverage
             )?;
         Ok(values.into_iter().map(|v| CtxValue(v.into())).collect())
     }

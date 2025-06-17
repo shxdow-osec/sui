@@ -395,6 +395,7 @@ impl VMRuntime {
         gas_meter: &mut impl GasMeter,
         extensions: &mut NativeContextExtensions,
         tracer: &mut Option<VMTracer<'_>>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<Vec<Value>> {
         Interpreter::entrypoint(
             func,
@@ -405,6 +406,7 @@ impl VMRuntime {
             extensions,
             &self.loader,
             tracer,
+            coverage
         )
     }
 
@@ -463,6 +465,7 @@ impl VMRuntime {
         extensions: &mut NativeContextExtensions,
         bypass_declared_entry_check: bool,
         tracer: Option<&mut MoveTraceBuilder>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<Vec<Value>> {
         let (func, _) = self.load_and_check_function(
             module,
@@ -481,6 +484,7 @@ impl VMRuntime {
             gas_meter,
             extensions,
             &mut tracer.map(VMTracer::new),
+            coverage
         )
     }
 
@@ -620,6 +624,7 @@ impl VMRuntime {
         gas_meter: &mut impl GasMeter,
         extensions: &mut NativeContextExtensions,
         tracer: Option<&mut MoveTraceBuilder>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<Vec<Value>> {
         move_vm_profiler::tracing_feature_enabled! {
             use move_vm_profiler::GasProfiler;
@@ -642,6 +647,7 @@ impl VMRuntime {
             extensions,
             bypass_declared_entry_check,
             tracer,
+            coverage
         )
     }
 

@@ -297,6 +297,7 @@ impl SharedTestingConfig {
 
         // TODO: collect VM logs if the verbose flag (i.e, `self.verbose`) is set
         let now = Instant::now();
+        let mut cov = Vec::new();
         let serialized_return_values_result = session.execute_function_bypass_visibility(
             &test_plan.module_id,
             IdentStr::new(function_name).unwrap(),
@@ -304,6 +305,7 @@ impl SharedTestingConfig {
             serialize_values(arguments.iter()),
             &mut gas_meter,
             tracer,
+            &mut cov
         );
         let mut return_result = serialized_return_values_result.map(|res| {
             res.return_values
