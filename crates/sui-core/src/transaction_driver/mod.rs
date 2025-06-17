@@ -125,7 +125,7 @@ where
             client.submit_transaction(raw_request, options.forwarded_client_addr),
         )
         .await
-        .map_err(|_| TransactionDriverError::TimeoutBeforeFinality)?
+        .map_err(|_| TransactionDriverError::TimeoutGettingConsensusPosition)?
         .map_err(|e| {
             TransactionDriverError::RpcFailure(name.concise().to_string(), e.to_string())
         })?;
@@ -137,7 +137,7 @@ where
 
         let response = match timeout(
             // TODO(fastpath): This will be removed when we change this to wait for effects from a quorum
-            Duration::from_secs(20),
+            Duration::from_secs(2),
             client.wait_for_effects(
                 RawWaitForEffectsRequest::try_from(WaitForEffectsRequest {
                     epoch,
@@ -159,7 +159,7 @@ where
                 ));
             }
             Err(_) => {
-                return Err(TransactionDriverError::TimeoutBeforeFinality);
+                return Err(TransactionDriverError::TimeoutWaitingForEffects);
             }
         };
 
