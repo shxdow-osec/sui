@@ -227,6 +227,7 @@ mod additional_consensus_state {
     }
 
     impl ConsensusCommitInfo {
+        #[cfg(any(test, feature = "test-utils"))]
         pub fn new_for_test(
             commit_round: u64,
             commit_timestamp: u64,

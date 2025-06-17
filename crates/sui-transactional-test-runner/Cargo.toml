@@ -47,7 +47,7 @@ sui-graphql-rpc.workspace = true
 sui-rpc-api.workspace = true
 sui-swarm-config.workspace = true
 sui-config.workspace = true
-sui-core.workspace = true
+sui-core = { workspace = true, features = ["test-utils"] }
 sui-framework.workspace = true
 sui-protocol-config.workspace = true
 sui-types.workspace = true

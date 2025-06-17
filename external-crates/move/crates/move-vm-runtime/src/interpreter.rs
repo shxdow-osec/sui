@@ -108,6 +108,7 @@ impl Interpreter {
         extensions: &mut NativeContextExtensions,
         loader: &Loader,
         tracer: &mut Option<VMTracer<'_>>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<Vec<Value>> {
         let mut interpreter = Interpreter {
             operand_stack: Stack::new(),
@@ -158,7 +159,7 @@ impl Interpreter {
             Ok(return_values?.into_iter().collect())
         } else {
             interpreter.execute_main(
-                loader, data_store, gas_meter, extensions, function, ty_args, args, tracer,
+                loader, data_store, gas_meter, extensions, function, ty_args, args, tracer, coverage
             )
         }
     }
@@ -179,6 +180,7 @@ impl Interpreter {
         ty_args: Vec<Type>,
         args: Vec<Value>,
         tracer: &mut Option<VMTracer<'_>>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<Vec<Value>> {
         let mut locals = Locals::new(function.local_count());
         for (i, value) in args.into_iter().enumerate() {
@@ -204,6 +206,7 @@ impl Interpreter {
             let exit_code = current_frame //self
                 .execute_code(&resolver, &mut self, gas_meter, tracer)
                 .map_err(|err| self.maybe_core_dump(err, &current_frame))?;
+            coverage.append(&mut current_frame.coverage);
             match exit_code {
                 ExitCode::Return => {
                     let non_ref_vals = current_frame
@@ -361,6 +364,7 @@ impl Interpreter {
                         self.maybe_core_dump(err, &frame)
                     })?;
                     current_frame = frame;
+                    coverage.append(&mut current_frame.coverage);
                 }
             }
         }
@@ -405,6 +409,7 @@ impl Interpreter {
             locals,
             function,
             ty_args,
+            coverage: vec![],
         })
     }
 
@@ -849,6 +854,7 @@ pub(crate) struct Frame {
     pub(crate) locals: Locals,
     pub(crate) function: Arc<Function>,
     pub(crate) ty_args: Vec<Type>,
+    pub(crate) coverage: Vec<u16>
 }
 
 /// An `ExitCode` from `execute_code_unit`.
@@ -1440,6 +1446,7 @@ impl Frame {
                     &self.function,
                     &self.locals, self.pc, instruction, resolver, interpreter
                 );
+                self.coverage.push(self.pc);
 
                 fail_point!("move_vm::interpreter_loop", |_| {
                     Err(

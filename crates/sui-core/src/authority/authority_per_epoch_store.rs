@@ -3453,6 +3453,7 @@ impl AuthorityPerEpochStore {
         consensus_commit_info: &ConsensusCommitInfo,
         cancelled_txns: &BTreeMap<TransactionDigest, CancelConsensusCertificateReason>,
     ) -> SuiResult<Option<TransactionKey>> {
+        #[cfg(any(test, feature = "test-utils"))]
         {
             if consensus_commit_info.skip_consensus_commit_prologue_in_test {
                 return Ok(None);
@@ -3560,6 +3561,7 @@ impl AuthorityPerEpochStore {
         Ok(())
     }
 
+    #[cfg(any(test, feature = "test-utils"))]
     pub fn get_highest_pending_checkpoint_height(&self) -> CheckpointHeight {
         self.consensus_quarantine
             .read()
@@ -3571,6 +3573,7 @@ impl AuthorityPerEpochStore {
     // VerifiedSequencedConsensusTransaction.
     // Also, ConsensusStats and hash will not be updated in the db with this function, unlike in
     // process_consensus_transactions_and_commit_boundary().
+    #[cfg(any(test, feature = "test-utils"))]
     pub async fn process_consensus_transactions_for_tests<C: CheckpointServiceNotify>(
         self: &Arc<Self>,
         transactions: Vec<SequencedConsensusTransaction>,
@@ -3601,6 +3604,7 @@ impl AuthorityPerEpochStore {
         .await
     }
 
+    #[cfg(any(test, feature = "test-utils"))]
     pub fn assign_shared_object_versions_for_tests(
         self: &Arc<Self>,
         cache_reader: &dyn ObjectCacheRead,

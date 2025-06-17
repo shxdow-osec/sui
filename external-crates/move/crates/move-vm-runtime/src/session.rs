@@ -79,6 +79,7 @@ impl<'r, S: MoveResolver> Session<'r, '_, S> {
         gas_meter: &mut impl GasMeter,
     ) -> VMResult<SerializedReturnValues> {
         let bypass_declared_entry_check = false;
+        let mut coverage = Vec::new();
         self.runtime.execute_function(
             module,
             function_name,
@@ -89,6 +90,7 @@ impl<'r, S: MoveResolver> Session<'r, '_, S> {
             &mut self.native_extensions,
             bypass_declared_entry_check,
             None,
+            &mut coverage
         )
     }
 
@@ -101,6 +103,7 @@ impl<'r, S: MoveResolver> Session<'r, '_, S> {
         args: Vec<impl Borrow<[u8]>>,
         gas_meter: &mut impl GasMeter,
         tracer: Option<&mut MoveTraceBuilder>,
+        coverage: &mut Vec<u16>
     ) -> VMResult<SerializedReturnValues> {
         move_vm_profiler::tracing_feature_enabled! {
             use move_vm_profiler::GasProfiler;
@@ -129,6 +132,7 @@ impl<'r, S: MoveResolver> Session<'r, '_, S> {
             &mut self.native_extensions,
             bypass_declared_entry_check,
             tracer,
+            coverage
         )
     }
 
