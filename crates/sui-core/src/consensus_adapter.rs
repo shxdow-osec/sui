@@ -651,6 +651,7 @@ impl ConsensusAdapter {
         if self.num_inflight_transactions.load(Ordering::Relaxed) as usize
             > self.max_pending_transactions
         {
+            debug!("Consensus adapter is overloaded, not submitting transaction");
             return false;
         }
         // Then check if submit_semaphore has permits
@@ -770,6 +771,7 @@ impl ConsensusAdapter {
 
             // If transaction is received by consensus or checkpoint while we wait, we are done.
             _ = &mut processed_via_consensus_or_checkpoint => {
+                debug!("Transaction {:?} has been processed by consensus or checkpoint", transaction_keys);
                 None
             }
         };
@@ -899,6 +901,22 @@ impl ConsensusAdapter {
             };
         }
         debug!("{transaction_keys:?} processed by consensus");
+
+        // Add debug logging to understand metric recording
+        debug!(
+            "About to record sequencing_certificate_latency metric for {transaction_keys:?}, processed_method: {:?}",
+            guard.processed_method
+        );
+
+        // Add specific logging for different processed methods
+        match guard.processed_method {
+            ProcessedMethod::Consensus => {
+                debug!("Transaction {transaction_keys:?} processed via CONSENSUS - will record latency metric");
+            }
+            ProcessedMethod::Checkpoint => {
+                debug!("Transaction {transaction_keys:?} processed via CHECKPOINT - will record latency metric but may be filtered out");
+            }
+        }
 
         let consensus_keys: Vec<_> = transactions.iter().map(|t| t.key()).collect();
         epoch_store
@@ -1226,7 +1244,7 @@ struct InflightDropGuard<'a> {
     processed_method: ProcessedMethod,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 enum ProcessedMethod {
     Consensus,
     Checkpoint,
@@ -1307,6 +1325,13 @@ impl Drop for InflightDropGuard<'_> {
             ProcessedMethod::Consensus => "processed_via_consensus",
             ProcessedMethod::Checkpoint => "processed_via_checkpoint",
         };
+
+        // Add debug logging to confirm metric recording
+        debug!(
+            "Recording sequencing_certificate_latency metric: position={}, tx_type={}, processed_method={}, latency={:?}",
+            position, self.tx_type, processed_method, latency
+        );
+
         self.adapter
             .metrics
             .sequencing_certificate_latency
